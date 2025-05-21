@@ -71,6 +71,7 @@ ${cardText}
   }
 });
 
-app.listen(5000, () => {
-  console.log("🔮 AI塔羅伺服器正在執行，網址：http://localhost:5000");
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`🔮 AI塔羅伺服器正在執行，網址：http://localhost:${PORT}`);
 });
