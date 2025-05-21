@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>🔮AI 塔羅師🔮</title>
+  <style>
+    body {
+      font-family: "PMingLiU", "MingLiU", "SimSun", "serif";
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #F1E1FF; 
+      color: #4b0082;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      color: #6a0dad;
+      margin-bottom: 1em;
+      position: relative;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 180px; 
+      font-size: 16px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 2px solid #d8b4fe;
+      font-family: "PMingLiU", "MingLiU", "SimSun", "serif";
+      resize: vertical;
+    }
+
+    .reading-result {
+      white-space: pre-wrap;
+      margin-top: 20px;
+      padding: 15px;
+      border: 2px dashed #c084fc;
+      border-radius: 15px;
+      min-height: 150px;
+      background-color: #fdf4ff;
+    }
+
+    .card-selection {
+      margin: 20px 0;
+    }
+
+    #cardImages {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 15px;
+      justify-items: center;
+    }
+
+    .card {
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      width: 100px;
+      border-radius: 10px;
+    }
+
+    .card img {
+      width: 100px;
+      height: 160px;
+      transition: transform 0.6s ease;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: block;
+      margin: 0 auto;
+    }
+
+    .reversed {
+      transform: rotate(180deg);
+    }
+
+    .card-label {
+      margin-top: 6px;
+      font-weight: bold;
+      font-size: 14px;
+      min-height: 36px;
+    }
+
+    .selected {
+      outline: 4px solid #a855f7;
+      border-radius: 12px;
+    }
+
+    .color-box {
+      display: inline-block;
+      width: 60px;
+      height: 60px;
+      border: 2px solid #000;
+      vertical-align: middle;
+      margin-left: 10px;
+      border-radius: 4px; 
+    }
+
+    .step {
+      display: none;
+    }
+
+    .step.active {
+      display: block;
+    }
+
+    #navButtons {
+      display: none;
+    }
+
+    .button-group {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 16px;
+      border-radius: 8px;
+      background: #c084fc;
+      border: none;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      font-family: inherit;
+    }
+
+    button:hover {
+      background: #a855f7;
+    }
+
+    video,
+    canvas {
+      border-radius: 10px;
+      border: 2px solid #d8b4fe;
+    }
+
+    ol li {
+      margin-bottom: 0.5em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔮 AI 塔羅師 🔮</h1>
+
+  <!-- Step 0 -->
+  <div id="step0" class="step active">
+    <p>歡迎踏入 AI 塔羅占卜的神秘世界。在這裡，我們將透過精準的三階段流程，陪伴你探索內心深處的真實聲音：</p>
+    <ol>
+      <li>請誠心輸入你最關注的問題，讓占卜聚焦於你的核心議題</li>
+      <li>選擇一件代表你當下心境的物品，系統將透過色彩能量解析你的情緒波動</li>
+      <li>抽取三張塔羅牌，結合 AI 智慧，為你揭示潛藏的指引與啟示</li>
+    </ol>
+    <div class="button-group">
+      <button onclick="startFlow()">開始占卜</button>
+    </div>
+  </div>
+  
+  <!-- Step 1: 輸入問題 -->
+  <div id="step1" class="step">
+    <div class="form-group">
+      <label style="display: block; margin-bottom: 16px;">你的問題:</label>
+      <textarea id="question" style="width: 100%; height: 50px; font-size: 16px; padding: 8px; border-radius: 8px;"></textarea>
+    </div>
+  </div>
+
+  <!-- Step 2: 顏色擷取 -->
+  <div id="step2" class="step">
+    <div class="form-group">
+      <label>你喜歡的顏色（從畫面中截取）:</label>
+      <input type="text" id="color" readonly />
+      <span id="colorPreview" class="color-box"></span><br />
+      <button onclick="startCamera()">開啟攝影機</button>
+      <button onclick="captureColor()">截取顏色</button>
+    </div>
+    <video id="videoContainer" autoplay width="320" height="240" style="display: none;"></video>
+    <canvas id="canvas" width="320" height="240" style="display: none;"></canvas>
+  </div>
+
+  <!-- Step 3: 選牌與解讀 -->
+  <div id="step3" class="step">
+    <div class="card-selection">
+      <label style="display: block; margin-bottom: 16px;">
+        請從下方10張牌中選擇你想要的3張牌：
+      </label>
+      <div id="cardImages"></div>
+    </div>
+    <div class="button-group">
+      <button onclick="drawCards()">重新抽牌</button>
+      <button onclick="getReading()">取得解讀</button>
+    </div>
+    <div id="result" class="reading-result"></div>
+    <div class="button-group">
+      <button onclick="restartFlow()">🔄 重新開始占卜</button>
+    </div>
+  </div>
+
+  <!-- 分頁控制 -->
+  <div id="navButtons" class="button-group">
+    <button id="prevBtn" onclick="changeStep(-1)">上一步</button>
+    <button id="nextBtn" onclick="changeStep(1)">下一步</button>
+  </div>
+
+<script>
+
+  const tarotCards = [
+    "愚者", "魔術師", "女祭司", "女皇", "皇帝", "教皇", "戀人", "戰車",
+    "力量", "隱者", "命運之輪", "正義", "倒吊人", "死神", "節制", "惡魔",
+    "高塔", "星星", "月亮", "太陽", "審判", "世界"
+  ];
+  let displayedCards = [];
+  let currentStep = 0;
+  let videoStream;
+
+  function startFlow() {
+    changeStep(1);
+    document.getElementById('prevBtn').disabled = true;
+  }
+
+  function changeStep(direction) {
+    if (direction === 1) {
+      if (currentStep === 1 && !document.getElementById('question').value.trim()) {
+        alert('請先輸入你的問題'); return;
+      }
+      if (currentStep === 2 && !document.getElementById('color').value) {
+        alert('請先截取顏色'); return;
+      }
+    }
+
+    currentStep += direction;
+    if (currentStep < 1) currentStep = 1;
+    if (currentStep > 3) currentStep = 3;
+
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`step${currentStep}`).classList.add('active');
+    // 新增判斷是否要顯示整個按鈕區塊
+      const nav = document.getElementById('navButtons');
+    if (currentStep === 0 || currentStep === 3) {
+      nav.style.display = 'none';  // 第一步與第三步都隱藏整個按鈕區塊
+    } else {
+      nav.style.display = 'block'; // 其他步驟顯示
+    }
+
+      document.getElementById('prevBtn').disabled = currentStep === 1;
+      document.getElementById('nextBtn').disabled = currentStep === 3;
+
+      if (currentStep === 3 && displayedCards.length === 0) drawCards();
+    }
+  function drawCards() {
+    const available = [...tarotCards];
+    displayedCards = [];
+    const container = document.getElementById('cardImages');
+    container.innerHTML = '';
+
+    for (let i = 0; i < 10; i++) {
+      const idx = Math.floor(Math.random() * available.length);
+      const name = available.splice(idx, 1)[0];
+      const reversed = Math.random() < 0.5;
+      displayedCards.push({ name, reversed, flipped: false, selected: false });
+
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.dataset.index = i;
+
+      const img = document.createElement('img');
+      img.src = '/image/back.png';
+      img.alt = '卡牌背面';
+
+      const label = document.createElement('div');
+      label.className = 'card-label';
+      label.textContent = '';
+
+      div.appendChild(img);
+      div.appendChild(label);
+      container.appendChild(div);
+      div.addEventListener('click', () => selectCard(i));
+    }
+
+    document.getElementById('result').textContent = '';
+  }
+
+  function selectCard(i) {
+    const card = displayedCards[i];
+    if (card.selected) {
+      card.selected = false;
+      card.flipped = false;
+    } else {
+      if (displayedCards.filter(c => c.selected).length >= 3) {
+        alert('最多只能選擇三張牌'); return;
+      }
+      card.selected = true;
+      card.flipped = true;
+    }
+    updateCardDisplay(i);
+  }
+
+  function updateCardDisplay(i) {
+    const card = displayedCards[i];
+    const div = document.querySelector(`.card[data-index='${i}']`);
+    const img = div.querySelector('img');
+    const label = div.querySelector('.card-label');
+
+    if (card.flipped) {
+      img.src = '/image/front.png';
+      card.reversed ? img.classList.add('reversed') : img.classList.remove('reversed');
+      label.textContent = `${card.name}（${card.reversed ? '逆位' : '正位'}）`;
+    } else {
+      img.src = '/image/back.png';
+      img.classList.remove('reversed');
+      label.textContent = '';
+    }
+
+    card.selected ? div.classList.add('selected') : div.classList.remove('selected');
+  }
+
+  async function startCamera() {
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const video = document.getElementById('videoContainer');
+      video.srcObject = videoStream;
+      video.style.display = 'block';
+    } catch (e) {
+      alert('無法開啟攝影機');
+    }
+  }
+
+  function captureColor() {
+    const video = document.getElementById('videoContainer');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const pixel = ctx.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data;
+    const hex = `#${pixel[0].toString(16).padStart(2, '0')}${pixel[1].toString(16).padStart(2, '0')}${pixel[2].toString(16).padStart(2, '0')}`;
+
+    document.getElementById('color').value = hex;
+    document.getElementById('colorPreview').style.backgroundColor = hex;
+
+    // 這裡關閉攝影機
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop());
+      video.srcObject = null;
+      video.style.display = 'none';
+      videoStream = null;  // 清除串流物件
+    }
+  }
+  async function getReading() {
+    const selected = displayedCards.filter(c => c.selected);
+    if (selected.length !== 3) {
+      alert('請選擇三張牌'); return;
+    }
+
+    const question = document.getElementById('question').value;
+    const color = document.getElementById('color').value;
+    const cards = selected.map(c => `${c.name}（${c.reversed ? '逆位' : '正位'}）`);
+
+    const resultDiv = document.getElementById('result');
+    resultDiv.textContent = `你的問題是：「${question}」\n\n你的顏色是：${color}\n\n你選的牌是：\n${cards.join('、')}\n\n🔮 請稍候，AI 正在分析你的能量與命運...`;
+
+    try {
+      const response = await fetch('/reading', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, color, cards })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+
+      const data = await response.json();
+      resultDiv.textContent = `你的問題是：「${question}」\n\n你的顏色是：${color}。\n\n你選的牌是：\n${cards.join('、')}\n\n🔮 AI 解讀如下：\n\n${data.result}`;
+    } catch (error) {
+      resultDiv.textContent = '⚠️ 解讀失敗，請稍後再試。\n\n錯誤資訊：' + error.message;
+    }
+  }
+  function restartFlow() {
+    // 清除所有資料
+    currentStep = 0;
+    document.getElementById('question').value = '';
+    document.getElementById('color').value = '';
+    document.getElementById('colorPreview').style.backgroundColor = 'transparent';
+    document.getElementById('result').textContent = '';
+    displayedCards = [];
+    document.getElementById('cardImages').innerHTML = '';
+
+    // 隱藏攝影機與畫布
+    if (videoStream) {
+      const tracks = videoStream.getTracks();
+      tracks.forEach(track => track.stop());
+      videoStream = null;
+    }
+    document.getElementById('videoContainer').style.display = 'none';
+    document.getElementById('canvas').style.display = 'none';
+
+    // 顯示初始頁面
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step0').classList.add('active');
+    document.getElementById('navButtons').style.display = 'none';
+  }
+</script>
+</body>
+</html>
